@@ -1,9 +1,51 @@
 import streamlit as st
+import json
+import os
+from datetime import date
+from utils import generate_pdf
 from agent import (ask_clarifying_questions, generate_prep,
                    try_fetch_linkedin, extract_personal_highlights,
                    INDUSTRIES, FUNCTIONS)
 
 st.set_page_config(page_title="Career Fair Prep Agent", page_icon="🎯", layout="centered")
+
+# ── Rate limiting config ──────────────────────────────────────────────────────
+MAX_SESSIONS    = 3     # max generations per browser session
+DAILY_CAP       = 30    # max total generations per day across all users
+COUNTER_FILE    = "/tmp/usage_counter.json"
+ACCESS_CODE_KEY = "ACCESS_CODE"
+
+def _load_counter():
+    try:
+        if os.path.exists(COUNTER_FILE):
+            with open(COUNTER_FILE) as f:
+                data = json.load(f)
+            if data.get("date") == str(date.today()):
+                return data
+    except Exception:
+        pass
+    return {"date": str(date.today()), "count": 0}
+
+def _save_counter(data):
+    try:
+        with open(COUNTER_FILE, "w") as f:
+            json.dump(data, f)
+    except Exception:
+        pass
+
+def _increment_counter():
+    data = _load_counter()
+    data["count"] += 1
+    _save_counter(data)
+
+def _daily_count():
+    return _load_counter()["count"]
+
+def _check_access_code(entered):
+    try:
+        return entered.strip() == st.secrets[ACCESS_CODE_KEY].strip()
+    except Exception:
+        return True  # local dev: no secret configured = open access
 
 st.markdown("""
 <style>
@@ -59,10 +101,37 @@ st.markdown("<p style='color:#666; font-size:13px; margin-top:-0.5rem;'>Built fo
 st.markdown("---")
 
 defaults = {"step": "input", "questions": [], "resume": "", "jd": None,
-            "firm_overview": None, "company_context": None, "recruiters": [], "answers": []}
+            "firm_overview": None, "company_context": None, "recruiters": [], "answers": [],
+            "authenticated": False, "session_generations": 0}
 for k, v in defaults.items():
     if k not in st.session_state:
         st.session_state[k] = v
+
+# ── Access code gate ────────────────────────────────────────────────────────────
+if not st.session_state.authenticated:
+    st.markdown("<div class='section-label'>Access Code Required</div>", unsafe_allow_html=True)
+    st.markdown("<p style='color:#666; font-size:13px;'>This tool is shared with a limited group. Enter the access code to continue.</p>", unsafe_allow_html=True)
+    code_input = st.text_input("", placeholder="Enter access code...", type="password", label_visibility="collapsed")
+    if st.button("Unlock →"):
+        if _check_access_code(code_input):
+            st.session_state.authenticated = True
+            st.rerun()
+        else:
+            st.error("Incorrect access code. Ask Arun for the code.")
+    st.stop()
+
+# ── Daily cap check ──────────────────────────────────────────────────────────────
+if _daily_count() >= DAILY_CAP:
+    st.warning(f"⚠️ This tool has hit its daily limit of {DAILY_CAP} generations. Check back tomorrow!")
+    st.stop()
+
+# ── Session limit display ──────────────────────────────────────────────────────
+remaining = MAX_SESSIONS - st.session_state.session_generations
+if remaining <= 0:
+    st.error(f"You've used all {MAX_SESSIONS} generations for this session. Close and reopen the browser tab to start fresh.")
+    st.stop()
+if remaining < MAX_SESSIONS:
+    st.markdown(f"<p style='color:#555; font-size:11px; text-align:right;'>{remaining} generation(s) remaining this session</p>", unsafe_allow_html=True)
 
 # ══════════════════════════════════════════════════════════════════════════════
 # STEP 1 — Input
@@ -276,6 +345,8 @@ elif st.session_state.step == "clarify":
 # ══════════════════════════════════════════════════════════════════════════════
 elif st.session_state.step == "output":
 
+    _increment_counter()
+    st.session_state.session_generations += 1
     with st.spinner("Generating your career fair prep..."):
         result = generate_prep(
             st.session_state.resume,
@@ -305,6 +376,20 @@ elif st.session_state.step == "output":
         st.markdown(f"<div class='recruiter-block'>{result['recruiter_tips']}</div>", unsafe_allow_html=True)
 
     st.markdown("---")
+
+    # ── Download as PDF ───────────────────────────────────────────────────────
+    try:
+        pdf_bytes = generate_pdf(company, result, st.session_state.recruiters)
+        safe_name = company.lower().replace(" ", "_").replace("/", "-")
+        st.download_button(
+            label="⬇ Download prep as PDF",
+            data=pdf_bytes,
+            file_name=f"career_fair_prep_{safe_name}.pdf",
+            mime="application/pdf",
+        )
+    except Exception as e:
+        st.caption(f"PDF generation failed: {e}")
+
     if st.button("← Prep for another company"):
         for key in list(defaults.keys()):
             if key in st.session_state:
