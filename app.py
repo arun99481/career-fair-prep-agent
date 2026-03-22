@@ -345,18 +345,21 @@ elif st.session_state.step == "clarify":
 # ══════════════════════════════════════════════════════════════════════════════
 elif st.session_state.step == "output":
 
-    _increment_counter()
-    st.session_state.session_generations += 1
-    with st.spinner("Generating your career fair prep..."):
-        result = generate_prep(
-            st.session_state.resume,
-            st.session_state.jd,
-            st.session_state.firm_overview,
-            st.session_state.company_context,
-            st.session_state.recruiters,
-            st.session_state.questions,
-            st.session_state.answers,
-        )
+    # Generate once and cache in session state — prevents re-generation on download clicks
+    if "prep_result" not in st.session_state:
+        _increment_counter()
+        st.session_state.session_generations += 1
+        with st.spinner("Generating your career fair prep..."):
+            st.session_state.prep_result = generate_prep(
+                st.session_state.resume,
+                st.session_state.jd,
+                st.session_state.firm_overview,
+                st.session_state.company_context,
+                st.session_state.recruiters,
+                st.session_state.questions,
+                st.session_state.answers,
+            )
+    result = st.session_state.prep_result
 
     company = st.session_state.company_context.get("company", "this company") if st.session_state.company_context else "this company"
     st.markdown(f"### Your prep for **{company}**")
@@ -391,7 +394,7 @@ elif st.session_state.step == "output":
         st.caption(f"PDF generation failed: {e}")
 
     if st.button("← Prep for another company"):
-        for key in list(defaults.keys()):
+        for key in list(defaults.keys()) + ["prep_result"]:
             if key in st.session_state:
                 del st.session_state[key]
         st.rerun()
