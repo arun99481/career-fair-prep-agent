@@ -152,9 +152,22 @@ RESUME:
 
 {context_block}
 """
+    # Build messages with cache_control on the resume block (largest static chunk)
+    user_content = [
+        {
+            "type": "text",
+            "text": f"RESUME:\n{resume}",
+            "cache_control": {"type": "ephemeral"},  # cache for 5 min
+        },
+        {
+            "type": "text",
+            "text": prompt.replace(f"RESUME:\n{resume}", "").strip(),
+        },
+    ]
     message = client.messages.create(
         model=MODEL, max_tokens=300,
-        messages=[{"role": "user", "content": prompt}],
+        messages=[{"role": "user", "content": user_content}],
+        betas=["prompt-caching-2024-07-31"],
     )
     raw = re.sub(r"^```(?:json)?|```$", "", message.content[0].text.strip(), flags=re.MULTILINE).strip()
     try:
@@ -206,9 +219,21 @@ Generate a JSON object with these keys. Plain text with line breaks — no markd
 Return ONLY the JSON object. No preamble, no markdown fences.
 """
 
+    user_content = [
+        {
+            "type": "text",
+            "text": f"RESUME:\n{resume}",
+            "cache_control": {"type": "ephemeral"},
+        },
+        {
+            "type": "text",
+            "text": prompt.replace(f"RESUME:\n{resume}", "").strip(),
+        },
+    ]
     message = client.messages.create(
         model=MODEL, max_tokens=2000,
-        messages=[{"role": "user", "content": prompt}],
+        messages=[{"role": "user", "content": user_content}],
+        betas=["prompt-caching-2024-07-31"],
     )
     raw = re.sub(r"^```(?:json)?|```$", "", message.content[0].text.strip(), flags=re.MULTILINE).strip()
     try:
