@@ -167,7 +167,7 @@ RESUME:
     message = client.messages.create(
         model=MODEL, max_tokens=300,
         messages=[{"role": "user", "content": user_content}],
-        betas=["prompt-caching-2024-07-31"],
+        extra_headers={"anthropic-beta": "prompt-caching-2024-07-31"},
     )
     raw = re.sub(r"^```(?:json)?|```$", "", message.content[0].text.strip(), flags=re.MULTILINE).strip()
     try:
@@ -233,7 +233,7 @@ Return ONLY the JSON object. No preamble, no markdown fences.
     message = client.messages.create(
         model=MODEL, max_tokens=2000,
         messages=[{"role": "user", "content": user_content}],
-        betas=["prompt-caching-2024-07-31"],
+        extra_headers={"anthropic-beta": "prompt-caching-2024-07-31"},
     )
     raw = re.sub(r"^```(?:json)?|```$", "", message.content[0].text.strip(), flags=re.MULTILINE).strip()
     try:
