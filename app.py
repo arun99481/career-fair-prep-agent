@@ -11,7 +11,7 @@ st.set_page_config(page_title="Career Fair Prep Agent", page_icon="🎯", layout
 
 # ── Rate limiting config ──────────────────────────────────────────────────────
 MAX_SESSIONS    = 3     # max generations per browser session
-DAILY_CAP       = 30    # max total generations per day across all users
+DAILY_CAP       = 50    # max total generations per day across all users
 COUNTER_FILE    = "/tmp/usage_counter.json"
 ACCESS_CODE_KEY = "ACCESS_CODE"
 
