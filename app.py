@@ -145,12 +145,12 @@ if st.session_state.step == "input":
     st.markdown("<div class='section-label'>Company</div>", unsafe_allow_html=True)
     col1, col2, col3 = st.columns(3)
     with col1:
-        company_name = st.text_input("Company name", placeholder="e.g. Blink Health")
+        company_name = st.text_input("Company name", placeholder="e.g. EV bots Inc.")
     with col2:
         industry = st.selectbox("Industry", [""] + INDUSTRIES)
     with col3:
         function = st.selectbox("Target function", [""] + FUNCTIONS)
-    focus_areas = st.text_input("Known focus areas (optional)", placeholder="e.g. AI-first product, prescription affordability")
+    focus_areas = st.text_input("Known focus areas (optional)", placeholder="e.g. AI-first product, affordability")
     st.markdown("---")
 
     st.markdown("<div class='section-label'>Role Context</div>", unsafe_allow_html=True)
@@ -173,11 +173,11 @@ if st.session_state.step == "input":
             st.markdown(f"<div class='recruiter-card'><strong>Recruiter {i+1}</strong></div>", unsafe_allow_html=True)
             rc1, rc2 = st.columns(2)
             with rc1:
-                rname = st.text_input("Name", key=f"rname_{i}", placeholder="e.g. Sachin Sharma")
+                rname = st.text_input("Name", key=f"rname_{i}", placeholder="e.g. Sameer Jain")
             with rc2:
                 rrole = st.text_input("Role / Title", key=f"rrole_{i}", placeholder="e.g. Senior PM")
             rurl = st.text_input("LinkedIn URL (optional)", key=f"rurl_{i}", placeholder="https://linkedin.com/in/...")
-            rnotes = st.text_input("Any other context", key=f"rnotes_{i}", placeholder="e.g. MSPM alum, focuses on healthcare team")
+            rnotes = st.text_input("Any other context", key=f"rnotes_{i}", placeholder="e.g. Tepper alum, focuses on Robotics team")
             recruiter_inputs.append({"name": rname, "role": rrole, "url": rurl, "notes": rnotes})
 
     st.markdown("<div class='disclaimer'>⚠️ Prototype — don't include sensitive personal info. Nothing is stored after your session.</div>", unsafe_allow_html=True)
