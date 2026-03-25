@@ -107,18 +107,18 @@ for k, v in defaults.items():
     if k not in st.session_state:
         st.session_state[k] = v
 
-# ── Access code gate ────────────────────────────────────────────────────────────
-if not st.session_state.authenticated:
-    st.markdown("<div class='section-label'>Access Code Required</div>", unsafe_allow_html=True)
-    st.markdown("<p style='color:#666; font-size:13px;'>This tool is shared with a limited group. Enter the access code to continue.</p>", unsafe_allow_html=True)
-    code_input = st.text_input("", placeholder="Enter access code...", type="password", label_visibility="collapsed")
-    if st.button("Unlock →"):
-        if _check_access_code(code_input):
-            st.session_state.authenticated = True
-            st.rerun()
-        else:
-            st.error("Incorrect access code. Ask Arun for the code.")
-    st.stop()
+# # ── Access code gate ────────────────────────────────────────────────────────────
+# if not st.session_state.authenticated:
+#     st.markdown("<div class='section-label'>Access Code Required</div>", unsafe_allow_html=True)
+#     st.markdown("<p style='color:#666; font-size:13px;'>This tool is shared with a limited group. Enter the access code to continue.</p>", unsafe_allow_html=True)
+#     code_input = st.text_input("", placeholder="Enter access code...", type="password", label_visibility="collapsed")
+#     if st.button("Unlock →"):
+#         if _check_access_code(code_input):
+#             st.session_state.authenticated = True
+#             st.rerun()
+#         else:
+#             st.error("Incorrect access code. Ask Arun for the code.")
+#     st.stop()
 
 # ── Daily cap check ──────────────────────────────────────────────────────────────
 if _daily_count() >= DAILY_CAP:
